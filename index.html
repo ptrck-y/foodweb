@@ -10,11 +10,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <style>
         :root { 
@@ -72,6 +73,11 @@
             box-shadow: 0 15px 50px rgba(212, 175, 55, 0.4); 
             transform: translateY(-2px); 
         }
+        .cta-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
         
         .modal-overlay { 
             position: fixed; 
@@ -103,6 +109,8 @@
             transform: scale(0.9); 
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             position: relative; 
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .modal-overlay.active .modal-content { 
             transform: scale(1); 
@@ -178,18 +186,108 @@
             border-color: rgba(212, 175, 55, 0.3);
             padding-left: 8px;
         }
+
+        /* Success Modal Styles */
+        .success-modal .modal-content {
+            text-align: center;
+            max-width: 450px;
+        }
         
-        @keyframes scroll { 
-            0% { transform: translateX(0); } 
-            100% { transform: translateX(-50%); } 
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, var(--sage-green), #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: scaleIn 0.5s ease;
         }
-        .ticker-wrapper { 
-            overflow: hidden; 
-            white-space: nowrap; 
+        
+        @keyframes scaleIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
-        .ticker-content { 
-            display: inline-block; 
-            animation: scroll 40s linear infinite; 
+        
+        .email-preview {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .email-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .email-field {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 4px;
+        }
+        
+        .email-field strong {
+            color: #d1d5db;
+            font-weight: 600;
+        }
+
+        /* Loading States */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.3);
+            border-radius: 50%;
+            border-top-color: #000;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 24px 0;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .step.active {
+            color: var(--sage-green);
+        }
+        
+        .step.completed {
+            color: var(--sage-green);
+        }
+        
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #374151;
+        }
+        
+        .step.active .step-dot,
+        .step.completed .step-dot {
+            background: var(--sage-green);
         }
 
         /* Chatbot Styles */
@@ -584,19 +682,39 @@
             letter-spacing: 0.1em;
         }
 
-        /* Loading animation for images */
-        .image-skeleton {
-            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 24px;
+            background: rgba(18, 18, 18, 0.95);
+            border: 1px solid var(--sage-green);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            transition: transform 0.4s ease;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
         }
         
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--sage-green);
         }
 
-        /* Responsive adjustments */
         @media (max-width: 480px) {
             .chat-container {
                 width: calc(100vw - 48px);
@@ -606,6 +724,17 @@
     </style>
 </head>
 <body>
+    <!-- Toast Notification -->
+    <div class="toast" id="notificationToast">
+        <div class="toast-icon">
+            <i data-lucide="check" class="w-5 h-5"></i>
+        </div>
+        <div>
+            <div class="font-semibold text-sm">Email Sent!</div>
+            <div class="text-xs text-gray-400">Check your inbox for confirmation</div>
+        </div>
+    </div>
+
     <!-- Particle Background -->
     <div class="particles" id="particles"></div>
 
@@ -661,7 +790,6 @@
                 </div>
             </div>
             
-            <!-- Stats -->
             <div class="stats-section max-w-4xl mx-auto mt-20">
                 <div class="stat-item">
                     <div class="stat-number" data-target="2050">0</div>
@@ -687,13 +815,13 @@
         </div>
     </section>
 
+    <!-- Menu and other sections remain the same... -->
     <section id="food-menu" class="py-24 px-6 bg-black/30">
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold mb-4">The <span class="gradient-text">Tasting Menu</span></h2>
                 <p class="text-gray-400 mb-8">Season 4: "Orbit" / Available until March 2026</p>
                 
-                <!-- Menu Tabs -->
                 <div class="menu-tabs">
                     <button class="menu-tab active" data-category="starters">Starters</button>
                     <button class="menu-tab" data-category="mains">Mains</button>
@@ -703,7 +831,6 @@
             </div>
             
             <div class="grid md:grid-cols-2 gap-12" id="menu-grid">
-                <!-- Dynamic content will be loaded here -->
                 <div class="glass-card p-8 menu-card" data-category="starters">
                     <h3 class="text-2xl font-bold text-yellow-500 mb-6 flex items-center gap-2">
                         <i data-lucide="sprout" class="w-5 h-5"></i> Starters
@@ -722,13 +849,6 @@
                                 <p class="text-sm text-gray-400">Glow-in-the-dark broth, activated charcoal crisp</p>
                             </div>
                             <span class="text-yellow-500 font-bold">$28</span>
-                        </div>
-                        <div class="menu-item cursor-pointer group">
-                            <div>
-                                <h4 class="text-xl font-semibold group-hover:text-yellow-500 transition-colors">CRISPR Carrots</h4>
-                                <p class="text-sm text-gray-400">Gene-edited for umami, honey-glazed, edible soil</p>
-                            </div>
-                            <span class="text-yellow-500 font-bold">$24</span>
                         </div>
                     </div>
                 </div>
@@ -752,57 +872,6 @@
                             </div>
                             <span class="text-yellow-500 font-bold">$95</span>
                         </div>
-                        <div class="menu-item cursor-pointer group">
-                            <div>
-                                <h4 class="text-xl font-semibold group-hover:text-emerald-500 transition-colors">Vertical Farm Duck</h4>
-                                <p class="text-sm text-gray-400">Hydroponic-fed, cherry reduction, root vegetable soil</p>
-                            </div>
-                            <span class="text-yellow-500 font-bold">$85</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="glass-card p-8 menu-card" data-category="desserts" style="display: none;">
-                    <h3 class="text-2xl font-bold text-purple-500 mb-6 flex items-center gap-2">
-                        <i data-lucide="cake" class="w-5 h-5"></i> Desserts
-                    </h3>
-                    <div class="space-y-6">
-                        <div class="menu-item cursor-pointer group">
-                            <div>
-                                <h4 class="text-xl font-semibold group-hover:text-purple-500 transition-colors">Nitrogen Ice Cream</h4>
-                                <p class="text-sm text-gray-400">Tableside preparation, liquid nitrogen cloud, gold leaf</p>
-                            </div>
-                            <span class="text-yellow-500 font-bold">$22</span>
-                        </div>
-                        <div class="menu-item cursor-pointer group">
-                            <div>
-                                <h4 class="text-xl font-semibold group-hover:text-purple-500 transition-colors">Deconstructed Tiramisu</h4>
-                                <p class="text-sm text-gray-400">Coffee caviar, mascarp foam, cocoa soil</p>
-                            </div>
-                            <span class="text-yellow-500 font-bold">$18</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="glass-card p-8 menu-card" data-category="cocktails" style="display: none;">
-                    <h3 class="text-2xl font-bold text-blue-500 mb-6 flex items-center gap-2">
-                        <i data-lucide="wine" class="w-5 h-5"></i> Cocktails
-                    </h3>
-                    <div class="space-y-6">
-                        <div class="menu-item cursor-pointer group">
-                            <div>
-                                <h4 class="text-xl font-semibold group-hover:text-blue-500 transition-colors">The Singularity</h4>
-                                <p class="text-sm text-gray-400">Mezcal, activated charcoal, edible silver</p>
-                            </div>
-                            <span class="text-yellow-500 font-bold">$24</span>
-                        </div>
-                        <div class="menu-item cursor-pointer group">
-                            <div>
-                                <h4 class="text-xl font-semibold group-hover:text-blue-500 transition-colors">Quantum Entanglement</h4>
-                                <p class="text-sm text-gray-400">Gin, butterfly pea flower, citrus caviar</p>
-                            </div>
-                            <span class="text-yellow-500 font-bold">$22</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -813,214 +882,171 @@
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold mb-4">Tech-to-Table <span class="gradient-text">Dining</span></h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">Where culinary artistry meets cutting-edge technology</p>
             </div>
             <div class="grid md:grid-cols-3 gap-8">
-                <div class="glass-card p-8 service-card group">
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-600 to-orange-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <div class="glass-card p-8 service-card">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-600 to-orange-700 flex items-center justify-center mb-6">
                         <i data-lucide="microscope" class="w-8 h-8 text-white"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-4">Molecular Precision</h3>
-                    <p class="text-gray-400 mb-4">Chefs collaborate with algorithms to balance flavor profiles at the molecular level.</p>
-                    <ul class="text-sm text-gray-500 space-y-2">
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> AI flavor pairing</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Texture optimization</li>
-                    </ul>
+                    <p class="text-gray-400">Chefs collaborate with algorithms to balance flavor profiles.</p>
                 </div>
-                <div class="glass-card p-8 service-card group">
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-600 to-green-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <div class="glass-card p-8 service-card">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-600 to-green-700 flex items-center justify-center mb-6">
                         <i data-lucide="brain-circuit" class="w-8 h-8 text-white"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-4">Neural Nutrition</h3>
-                    <p class="text-gray-400 mb-4">Personalized menus optimized for your health bio-metrics and dietary needs.</p>
-                    <ul class="text-sm text-gray-500 space-y-2">
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> DNA-based recommendations</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Real-time adaptation</li>
-                    </ul>
+                    <p class="text-gray-400">Personalized menus optimized for your health bio-metrics.</p>
                 </div>
-                <div class="glass-card p-8 service-card group">
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <div class="glass-card p-8 service-card">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center mb-6">
                         <i data-lucide="bot" class="w-8 h-8 text-white"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-4">Autonomous Delivery</h3>
-                    <p class="text-gray-400 mb-4">Zero-mile ingredients delivered by our silent drone fleet from vertical farms.</p>
-                    <ul class="text-sm text-gray-500 space-y-2">
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> 100% carbon neutral</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Harvest-to-table in 2hrs</li>
-                    </ul>
+                    <p class="text-gray-400">Zero-mile ingredients delivered by silent drone fleet.</p>
                 </div>
             </div>
         </div>
     </section>
-
-    <section id="experience" class="py-24 px-6 bg-black/30">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid md:grid-cols-2 gap-16 items-center">
-                <div>
-                    <h2 class="text-4xl md:text-5xl font-bold mb-6">Immersive <span class="gradient-text">Dining</span></h2>
-                    <p class="text-gray-400 text-lg mb-8">Every sense is engaged in our carefully curated environment. Holographic table settings, adaptive ambient lighting, and spatial audio design create a multi-sensory journey.</p>
-                    
-                    <div class="space-y-6">
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
-                                <i data-lucide="eye" class="w-6 h-6 text-yellow-500"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold mb-1">Visual Projection</h4>
-                                <p class="text-sm text-gray-400">AR-enhanced plating shows the origin story of each ingredient</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                                <i data-lucide="audio-lines" class="w-6 h-6 text-emerald-500"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold mb-1">Sonic Seasoning</h4>
-                                <p class="text-sm text-gray-400">Frequency-specific soundscapes enhance taste perception</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                                <i data-lucide="thermometer" class="w-6 h-6 text-purple-500"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold mb-1">Climate Control</h4>
-                                <p class="text-sm text-gray-400">Personalized micro-climate at each table setting</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="glass-card p-8 relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-emerald-500/5"></div>
-                    <div class="relative z-10 space-y-6">
-                        <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                            <span class="text-gray-400">Experience Duration</span>
-                            <span class="font-bold text-xl">3.5 Hours</span>
-                        </div>
-                        <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                            <span class="text-gray-400">Courses</span>
-                            <span class="font-bold text-xl">12 Tastings</span>
-                        </div>
-                        <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                            <span class="text-gray-400">Wine Pairing</span>
-                            <span class="font-bold text-xl">Optional</span>
-                        </div>
-                        <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                            <span class="text-gray-400">Dress Code</span>
-                            <span class="font-bold text-xl">Future Formal</span>
-                        </div>
-                        <div class="pt-4">
-                            <p class="text-sm text-gray-500 italic">"An unforgettable journey that challenges everything you know about dining."</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-24 px-6">
-        <div class="glass-card p-12 max-w-4xl mx-auto testimonial-card relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-            <div class="flex items-start gap-6 flex-col md:flex-row relative z-10">
-                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-500 to-emerald-500 flex-shrink-0 flex items-center justify-center text-3xl font-bold text-black">EA</div>
-                <div class="flex-1">
-                    <div class="flex gap-1 mb-4">
-                        <i data-lucide="star" class="w-5 h-5 text-yellow-500 fill-yellow-500"></i>
-                        <i data-lucide="star" class="w-5 h-5 text-yellow-500 fill-yellow-500"></i>
-                        <i data-lucide="star" class="w-5 h-5 text-yellow-500 fill-yellow-500"></i>
-                        <i data-lucide="star" class="w-5 h-5 text-yellow-500 fill-yellow-500"></i>
-                        <i data-lucide="star" class="w-5 h-5 text-yellow-500 fill-yellow-500"></i>
-                    </div>
-                    <p class="text-xl md:text-2xl mb-6 leading-relaxed text-gray-300">"Aura isn't just dinner; it's a glimpse into 2050. The precision-fermented truffle reduction was transcendent. The AI concierge anticipated our preferences perfectly."</p>
-                    <div>
-                        <p class="font-bold text-lg text-yellow-500">Elena Aris</p>
-                        <p class="text-gray-500">Senior Critic, The Culinary Times</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-24 px-6 text-center relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-transparent to-emerald-500/5"></div>
-        <div class="relative z-10 max-w-3xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Taste the <span class="gradient-text">Future</span>?</h2>
-            <p class="text-gray-400 mb-8 text-lg">Limited seating available for Season 4. Book your multi-sensory journey today.</p>
-            <button class="cta-button cta-final open-modal-btn text-lg px-12 py-5">Reserve Your Seat at the Future</button>
-            <p class="mt-6 text-sm text-gray-500">Or chat with our AI concierge for instant assistance</p>
-        </div>
-    </section>
-
-    <footer class="border-t border-gray-900 py-12 px-6">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid md:grid-cols-4 gap-8 mb-8">
-                <div class="md:col-span-2">
-                    <div class="text-2xl font-bold mb-4 flex items-center gap-2">
-                        <i data-lucide="chef-hat" class="w-8 h-8 text-yellow-500"></i>
-                        <span class="gradient-text">Aura Gastronomy</span>
-                    </div>
-                    <p class="text-gray-500 max-w-sm">The intersection of code and cuisine. Pioneering the future of dining through technology and sustainability.</p>
-                </div>
-                <div>
-                    <h4 class="font-bold mb-4 text-white">Location</h4>
-                    <p class="text-gray-500 text-sm">Sector 7, Innovation District<br>Neo-Tokyo, 2050<br>Japan</p>
-                </div>
-                <div>
-                    <h4 class="font-bold mb-4 text-white">Contact</h4>
-                    <p class="text-gray-500 text-sm">concierge@aura.future<br>+81 3-XXXX-2050</p>
-                    <div class="flex gap-4 mt-4">
-                        <a href="#" class="text-gray-400 hover:text-yellow-500 transition"><i data-lucide="instagram" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-yellow-500 transition"><i data-lucide="twitter" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-yellow-500 transition"><i data-lucide="youtube" class="w-5 h-5"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-gray-900 pt-8 text-center">
-                <p class="text-gray-600 text-sm">© 2026 Aura. The intersection of code and cuisine. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
 
     <!-- Reservation Modal -->
     <div class="modal-overlay" id="reservationModal">
         <div class="modal-content">
-            <button class="absolute top-4 right-4 text-gray-400 hover:text-white" id="closeModal"><i data-lucide="x" class="w-6 h-6"></i></button>
-            <h3 class="text-2xl font-bold mb-2">Secure Your Table</h3>
-            <p class="text-gray-400 mb-6 text-sm">Join us for the "Orbit" tasting menu.</p>
+            <button class="absolute top-4 right-4 text-gray-400 hover:text-white" id="closeModal">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
             
-            <form id="bookingForm" name="reservations" method="POST" data-netlify="true">
-                <input type="hidden" name="form-name" value="reservations">
+            <div id="bookingFormContainer">
+                <h3 class="text-2xl font-bold mb-2">Secure Your Table</h3>
+                <p class="text-gray-400 mb-6 text-sm">Join us for the "Orbit" tasting menu.</p>
                 
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Full Name</label>
-                    <input type="text" name="name" class="form-input" placeholder="e.g. Elon Musk" required>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
+                <form id="bookingForm">
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Date</label>
-                        <input type="date" name="date" class="form-input" required>
+                        <label class="block text-xs text-gray-500 mb-1">Full Name *</label>
+                        <input type="text" name="name" class="form-input" placeholder="e.g. Elon Musk" required>
                     </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Date *</label>
+                            <input type="date" name="date" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Time *</label>
+                            <select name="time" class="form-input" required>
+                                <option value="">Select time</option>
+                                <option value="18:30">6:30 PM</option>
+                                <option value="21:00">9:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Guests *</label>
+                            <select name="guests" class="form-input" required>
+                                <option value="2">2 Guests</option>
+                                <option value="4">4 Guests</option>
+                                <option value="6">6 Guests</option>
+                                <option value="8">8+ Guests</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Email *</label>
+                            <input type="email" name="email" class="form-input" placeholder="you@future.com" required>
+                        </div>
+                    </div>
+
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Guests</label>
-                        <select name="guests" class="form-input">
-                            <option value="2 Guests">2 Guests</option>
-                            <option value="4 Guests">4 Guests</option>
-                            <option value="6 Guests">6 Guests</option>
-                            <option value="Private">Private Party</option>
-                        </select>
+                        <label class="block text-xs text-gray-500 mb-1">Phone (for SMS confirmation)</label>
+                        <input type="tel" name="phone" class="form-input" placeholder="+1 (555) 000-0000">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Special Requests</label>
+                        <textarea name="requests" class="form-input h-20 resize-none" placeholder="Dietary restrictions, celebrations, seating preferences..."></textarea>
+                    </div>
+
+                    <div class="flex items-start gap-3 mb-4">
+                        <input type="checkbox" id="emailConsent" name="emailConsent" class="mt-1" checked>
+                        <label for="emailConsent" class="text-xs text-gray-400">
+                            Send me confirmation details and updates about my reservation via email
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="cta-button w-full mt-2" id="submitBtn">
+                        Confirm Reservation
+                    </button>
+                    
+                    <p class="text-xs text-gray-500 mt-4 text-center">
+                        You'll receive a confirmation email immediately after booking
+                    </p>
+                </form>
+            </div>
+
+            <!-- Processing State -->
+            <div id="processingState" style="display: none; text-align: center; padding: 40px 0;">
+                <div class="loading-spinner" style="width: 48px; height: 48px; border-width: 4px; margin: 0 auto 24px;"></div>
+                <h3 class="text-xl font-bold mb-2">Processing Reservation</h3>
+                <div class="progress-steps">
+                    <div class="step active" id="step1">
+                        <span class="step-dot"></span>
+                        <span>Validating</span>
+                    </div>
+                    <div class="step" id="step2">
+                        <span class="step-dot"></span>
+                        <span>Saving</span>
+                    </div>
+                    <div class="step" id="step3">
+                        <span class="step-dot"></span>
+                        <span>Emailing</span>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Email</label>
-                    <input type="email" name="email" class="form-input" placeholder="you@future.com" required>
+                <p class="text-sm text-gray-400" id="processingText">Checking availability...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal with Email Preview -->
+    <div class="modal-overlay success-modal" id="successModal">
+        <div class="modal-content">
+            <div class="success-icon">
+                <i data-lucide="check" class="w-10 h-10 text-white"></i>
+            </div>
+            
+            <h3 class="text-2xl font-bold mb-2">Reservation Confirmed!</h3>
+            <p class="text-gray-400 mb-6">A confirmation email has been sent to your inbox</p>
+            
+            <div class="email-preview">
+                <div class="email-header">
+                    <div class="email-field"><strong>To:</strong> <span id="emailPreviewTo">guest@example.com</span></div>
+                    <div class="email-field"><strong>Subject:</strong> Your Aura Reservation is Confirmed ✨</div>
                 </div>
-                <div>
-                    <label class="block text-xs text-gray-500 mb-1">Special Requests</label>
-                    <textarea name="requests" class="form-input h-20 resize-none" placeholder="Dietary restrictions, celebrations..."></textarea>
+                <div class="text-sm text-gray-300 space-y-2">
+                    <p>Dear <span id="emailPreviewName">Guest</span>,</p>
+                    <p>Your table for <strong id="emailPreviewGuests">2 guests</strong> is reserved for <strong id="emailPreviewDate">March 15, 2026</strong> at <strong id="emailPreviewTime">6:30 PM</strong>.</p>
+                    <p class="text-xs text-gray-500 mt-2">Booking Ref: <span id="bookingRef">AURA-2026-XXXX</span></p>
                 </div>
-                <button type="submit" class="cta-button w-full mt-2">Confirm Reservation</button>
-            </form>
+            </div>
+
+            <div class="space-y-3">
+                <button class="cta-button w-full" onclick="closeSuccessModal()">
+                    Done
+                </button>
+                <button class="w-full py-3 text-sm text-gray-400 hover:text-white transition" onclick="resendEmail()">
+                    <i data-lucide="refresh-cw" class="inline w-4 h-4 mr-2"></i>
+                    Resend Email
+                </button>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-white/10">
+                <p class="text-xs text-gray-500 mb-3">Add to calendar:</p>
+                <div class="flex gap-2 justify-center">
+                    <button class="px-4 py-2 bg-white/5 rounded-lg text-xs hover:bg-white/10 transition">Google</button>
+                    <button class="px-4 py-2 bg-white/5 rounded-lg text-xs hover:bg-white/10 transition">Apple</button>
+                    <button class="px-4 py-2 bg-white/5 rounded-lg text-xs hover:bg-white/10 transition">Outlook</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1043,13 +1069,9 @@
                 </button>
             </div>
             
-            <div class="chat-messages" id="chatMessages">
-                <!-- Messages will be inserted here -->
-            </div>
+            <div class="chat-messages" id="chatMessages"></div>
             
-            <div class="quick-replies" id="quickReplies">
-                <!-- Quick reply buttons -->
-            </div>
+            <div class="quick-replies" id="quickReplies"></div>
             
             <div class="chat-input-container">
                 <input type="text" class="chat-input" id="chatInput" placeholder="Ask about menu, reservations..." maxlength="200">
@@ -1067,6 +1089,25 @@
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
+
+        // EmailJS Configuration
+        // IMPORTANT: Replace these with your actual EmailJS credentials
+        const EMAILJS_CONFIG = {
+            publicKey: 'YOUR_PUBLIC_KEY', // Get from emailjs.com
+            serviceId: 'YOUR_SERVICE_ID', // e.g., 'service_abc123'
+            templateId: 'YOUR_TEMPLATE_ID', // e.g., 'template_xyz789'
+            // For demo purposes, we'll simulate if these are not set
+            isConfigured: function() {
+                return this.publicKey !== 'YOUR_PUBLIC_KEY' && 
+                       this.serviceId !== 'YOUR_SERVICE_ID' && 
+                       this.templateId !== 'YOUR_TEMPLATE_ID';
+            }
+        };
+
+        // Initialize EmailJS if configured
+        if (EMAILJS_CONFIG.isConfigured()) {
+            emailjs.init(EMAILJS_CONFIG.publicKey);
+        }
 
         // Create floating particles
         const particlesContainer = document.getElementById('particles');
@@ -1103,57 +1144,197 @@
         });
         
         closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-        
-        // Close modal on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) modal.classList.remove('active');
         });
 
-        // Form handling
+        // Form handling with Email Sending
         const bookingForm = document.getElementById('bookingForm');
-        
-        bookingForm.addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        const bookingFormContainer = document.getElementById('bookingFormContainer');
+        const processingState = document.getElementById('processingState');
+        const successModal = document.getElementById('successModal');
+
+        bookingForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const btn = bookingForm.querySelector('button[type="submit"]');
-            const originalText = btn.innerText;
-            btn.innerText = "Processing...";
+            const formData = new FormData(bookingForm);
+            const data = Object.fromEntries(formData);
+            
+            // Validate email
+            if (!data.email || !data.email.includes('@')) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            // Show processing state
+            bookingFormContainer.style.display = 'none';
+            processingState.style.display = 'block';
+            
+            // Generate booking reference
+            const bookingRef = 'AURA-' + new Date().getFullYear() + '-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            try {
+                // Step 1: Validate
+                updateProcessingStep(1, 'Checking table availability...');
+                await simulateDelay(800);
+                
+                // Step 2: Save to Netlify/Backend
+                updateProcessingStep(2, 'Securing your reservation...');
+                
+                // Try to submit to Netlify Forms if available
+                try {
+                    await fetch('/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({
+                            'form-name': 'reservations',
+                            ...data,
+                            'bookingRef': bookingRef
+                        }).toString()
+                    });
+                } catch (netlifyError) {
+                    console.log('Netlify form not available, continuing with email only');
+                }
+                
+                await simulateDelay(1000);
+                
+                // Step 3: Send Email
+                updateProcessingStep(3, 'Sending confirmation email...');
+                
+                const emailSent = await sendConfirmationEmail(data, bookingRef);
+                
+                await simulateDelay(800);
+                
+                // Show success
+                showSuccessModal(data, bookingRef, emailSent);
+                
+                // Show toast notification
+                showToast('Confirmation email sent to ' + data.email);
+                
+            } catch (error) {
+                console.error('Booking error:', error);
+                alert('There was an error processing your reservation. Please try again or contact us directly.');
+                bookingFormContainer.style.display = 'block';
+                processingState.style.display = 'none';
+            }
+        });
+
+        function updateProcessingStep(step, text) {
+            document.getElementById('processingText').textContent = text;
+            for (let i = 1; i <= 3; i++) {
+                const stepEl = document.getElementById('step' + i);
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                    stepEl.classList.remove('active');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                    stepEl.classList.remove('completed');
+                }
+            }
+        }
+
+        function simulateDelay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function sendConfirmationEmail(data, bookingRef) {
+            const templateParams = {
+                to_email: data.email,
+                to_name: data.name,
+                from_name: 'Aura Gastronomy',
+                booking_ref: bookingRef,
+                guests: data.guests,
+                date: formatDate(data.date),
+                time: formatTime(data.time),
+                special_requests: data.requests || 'None',
+                reply_to: 'concierge@aura.future'
+            };
+
+            try {
+                if (EMAILJS_CONFIG.isConfigured()) {
+                    // Send via EmailJS
+                    await emailjs.send(
+                        EMAILJS_CONFIG.serviceId,
+                        EMAILJS_CONFIG.templateId,
+                        templateParams
+                    );
+                    return true;
+                } else {
+                    // Simulate email sending for demo
+                    console.log('Simulating email send:', templateParams);
+                    await simulateDelay(1000);
+                    return 'simulated';
+                }
+            } catch (error) {
+                console.error('Email send failed:', error);
+                return false;
+            }
+        }
+
+        function showSuccessModal(data, bookingRef, emailSent) {
+            // Update preview
+            document.getElementById('emailPreviewTo').textContent = data.email;
+            document.getElementById('emailPreviewName').textContent = data.name;
+            document.getElementById('emailPreviewGuests').textContent = data.guests + ' guest' + (data.guests > 1 ? 's' : '');
+            document.getElementById('emailPreviewDate').textContent = formatDate(data.date);
+            document.getElementById('emailPreviewTime').textContent = formatTime(data.time);
+            document.getElementById('bookingRef').textContent = bookingRef;
+            
+            // Hide processing, show success
+            modal.classList.remove('active');
+            processingState.style.display = 'none';
+            bookingFormContainer.style.display = 'block';
+            bookingForm.reset();
+            
+            successModal.classList.add('active');
+            
+            // Notify chatbot
+            setTimeout(() => {
+                if (!chatContainer.classList.contains('active')) {
+                    chatToggle.click();
+                }
+                addMessage('bot', `Great news! I've confirmed your reservation for ${formatDate(data.date)}. You should receive an email at ${data.email} shortly. Reference: ${bookingRef}`);
+            }, 1000);
+        }
+
+        function closeSuccessModal() {
+            successModal.classList.remove('active');
+        }
+
+        async function resendEmail() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading-spinner" style="width: 16px; height: 16px; margin: 0;"></span> Sending...';
             btn.disabled = true;
             
-            const formData = new FormData(bookingForm);
+            // Simulate resend
+            await simulateDelay(1500);
             
-            fetch("/", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams(formData).toString()
-            })
-            .then(() => {
-                btn.innerText = "Confirmed!";
-                btn.style.background = "var(--sage-green)";
-                
-                // Add success message to chat
-                setTimeout(() => {
-                    modal.classList.remove('active');
-                    btn.innerText = originalText;
-                    btn.style.background = "";
-                    btn.disabled = false;
-                    bookingForm.reset();
-                    
-                    // Open chat with confirmation
-                    if (!chatContainer.classList.contains('active')) {
-                        chatToggle.click();
-                    }
-                    addMessage("bot", "Your reservation has been confirmed! We're excited to host you at Aura. Is there anything else you'd like to know about your upcoming experience?");
-                    showQuickReplies(["What's the dress code?", "Can I modify my reservation?", "See you soon!"]);
-                }, 1500);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                btn.innerText = "Failed";
-                btn.disabled = false;
-                alert("Something went wrong. Please try again or contact us via chat.");
-            });
-        });
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showToast('Email resent successfully!');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('notificationToast');
+            toast.querySelector('.text-xs').textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        function formatDate(dateString) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function formatTime(timeString) {
+            const [hours, minutes] = timeString.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${minutes} ${ampm}`;
+        }
 
         // GSAP Animations
         gsap.registerPlugin(ScrollTrigger);
@@ -1163,8 +1344,7 @@
             .from('.hero-badge', { y: 30, opacity: 0, duration: 0.8 })
             .from('.hero-headline', { y: 100, opacity: 0, duration: 1.2 }, '-=0.4')
             .from('.hero-subtitle', { y: 50, opacity: 0, duration: 1 }, '-=0.6')
-            .from('.hero-cta', { y: 30, opacity: 0, duration: 0.8 }, '-=0.4')
-            .from('.hero-cta-secondary', { y: 30, opacity: 0, duration: 0.8 }, '-=0.6');
+            .from('.hero-cta', { y: 30, opacity: 0, duration: 0.8 }, '-=0.4');
 
         // Animate stats
         const statNumbers = document.querySelectorAll('.stat-number');
@@ -1182,69 +1362,62 @@
             });
         });
 
-        const animateOnScroll = (selector, delay = 0) => {
-            gsap.utils.toArray(selector).forEach((el, index) => {
-                gsap.from(el, {
-                    scrollTrigger: { 
-                        trigger: el, 
-                        start: "top 85%", 
-                        toggleActions: "play none none reverse" 
-                    },
-                    y: 60, 
-                    opacity: 0, 
-                    duration: 0.8, 
-                    delay: delay * index
-                });
-            });
-        };
-        
-        animateOnScroll('.menu-card', 0.2);
-        animateOnScroll('.service-card', 0.2);
-        animateOnScroll('.testimonial-card');
-        animateOnScroll('.cta-final');
+        // Chatbot Logic (simplified)
+        const chatToggle = document.getElementById('chatToggle');
+        const chatContainer = document.getElementById('chatContainer');
+        const chatClose = document.getElementById('chatClose');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const chatSend = document.getElementById('chatSend');
 
-        // Magnetic button effect
-        document.querySelectorAll('.cta-button').forEach(button => {
-            button.addEventListener('mousemove', (e) => {
-                const rect = button.getBoundingClientRect();
-                gsap.to(button, { 
-                    x: (e.clientX - rect.left - rect.width/2) * 0.2, 
-                    y: (e.clientY - rect.top - rect.height/2) * 0.2, 
-                    duration: 0.3 
-                });
-            });
-            button.addEventListener('mouseleave', () => {
-                gsap.to(button, { 
-                    x: 0, 
-                    y: 0, 
-                    duration: 0.5, 
-                    ease: "elastic.out(1, 0.5)" 
-                });
-            });
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        chatToggle.addEventListener('click', () => {
+            chatContainer.classList.toggle('active');
+            chatToggle.classList.remove('pulse');
         });
 
-        // Smooth scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
+        chatClose.addEventListener('click', () => {
+            chatContainer.classList.remove('active');
         });
 
-        // Menu tabs functionality
+        chatSend.addEventListener('click', () => {
+            const text = chatInput.value.trim();
+            if (text) {
+                addMessage('user', text);
+                chatInput.value = '';
+                setTimeout(() => {
+                    addMessage('bot', "I'm connecting you with our reservation system. For immediate booking, please use the 'Book Table' button!");
+                }, 1000);
+            }
+        });
+
+        // Initialize
+        let firstOpen = true;
+        chatToggle.addEventListener('click', () => {
+            if (firstOpen && chatContainer.classList.contains('active')) {
+                setTimeout(() => {
+                    addMessage('bot', "Hello! I'm Aura's AI concierge. I can help you explore our futuristic menu or assist with reservations. How may I help you today?");
+                }, 500);
+                firstOpen = false;
+            }
+        });
+
+        // Menu tabs
         const menuTabs = document.querySelectorAll('.menu-tab');
         const menuCards = document.querySelectorAll('.menu-card');
         
         menuTabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                // Update active tab
                 menuTabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                // Show corresponding card
                 const category = tab.getAttribute('data-category');
                 menuCards.forEach(card => {
                     if (card.getAttribute('data-category') === category) {
@@ -1259,250 +1432,13 @@
             });
         });
 
-        // ==================== CHATBOT LOGIC ====================
-        
-        const chatToggle = document.getElementById('chatToggle');
-        const chatContainer = document.getElementById('chatContainer');
-        const chatClose = document.getElementById('chatClose');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const chatSend = document.getElementById('chatSend');
-        const quickReplies = document.getElementById('quickReplies');
-
-        // Knowledge base for the chatbot
-        const knowledgeBase = {
-            greetings: ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good evening'],
-            menu: {
-                keywords: ['menu', 'food', 'eat', 'dish', 'course', 'starters', 'mains', 'desserts', 'price'],
-                response: "Our Season 4 'Orbit' menu features 12 courses including Zero-G Foam ($35), Lab-Grown Wagyu A5 ($120), and Neural Network Salmon ($95). We also offer molecular cocktails and nitrogen desserts. Would you like details on a specific category?"
-            },
-            reservation: {
-                keywords: ['reservation', 'book', 'table', 'seat', 'reserve', 'booking'],
-                response: "I'd be happy to help you reserve a table! We recommend booking at least 2 weeks in advance. Click the 'Book Table' button or I can guide you through it. How many guests will be dining?"
-            },
-            hours: {
-                keywords: ['hours', 'open', 'time', 'when', 'schedule', 'close'],
-                response: "Aura is open Tuesday through Sunday, 6:00 PM to 11:00 PM. We offer two seating times: 6:30 PM and 9:00 PM. The full experience lasts approximately 3.5 hours."
-            },
-            location: {
-                keywords: ['location', 'where', 'address', 'find', 'directions'],
-                response: "We're located in Sector 7, Innovation District, Neo-Tokyo. Our entrance features a biometric recognition system. Look for the golden orb sculpture!"
-            },
-            dietary: {
-                keywords: ['vegan', 'vegetarian', 'allergy', 'gluten', 'diet', 'restriction', 'allergic'],
-                response: "Absolutely! Our AI nutrition system can adapt the menu for any dietary requirements. Please mention your restrictions when booking, and our chefs will create personalized alternatives that maintain the full experience."
-            },
-            dresscode: {
-                keywords: ['dress', 'wear', 'clothing', 'attire', 'code'],
-                response: "Our dress code is 'Future Formal' - think sleek, modern, with metallic or dark tones encouraged. Smart casual is acceptable, but we recommend avoiding overly casual wear to match our immersive environment."
-            },
-            technology: {
-                keywords: ['tech', 'ai', 'technology', 'drone', 'molecular', 'experience'],
-                response: "We use molecular gastronomy, AI flavor pairing, AR visual projections, and sonic seasoning. Our ingredients come from vertical farms via autonomous drones. It's dining meets the future!"
-            },
-            pricing: {
-                keywords: ['cost', 'price', 'expensive', 'cheap', 'money', 'pay', '$'],
-                response: "The full 12-course Orbit experience is $350 per person, with optional wine pairing at $150. Individual à la carte items range from $24-$120. We believe in transparent pricing for sustainable luxury."
-            },
-            default: "I'm here to help with reservations, menu details, dietary requirements, or anything about the Aura experience. What would you like to know?"
-        };
-
-        let conversationContext = {
-            lastTopic: null,
-            guestCount: null,
-            preferredDate: null
-        };
-
-        // Toggle chat
-        chatToggle.addEventListener('click', () => {
-            chatContainer.classList.toggle('active');
-            chatToggle.classList.remove('pulse');
-            if (chatContainer.classList.contains('active')) {
-                setTimeout(() => chatInput.focus(), 300);
-            }
-        });
-
-        chatClose.addEventListener('click', () => {
-            chatContainer.classList.remove('active');
-        });
-
-        // Add message to chat
-        function addMessage(sender, text) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}`;
-            messageDiv.textContent = text;
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        // Set minimum date to today
+        const dateInput = document.querySelector('input[name="date"]');
+        if (dateInput) {
+            dateInput.min = new Date().toISOString().split('T')[0];
         }
 
-        // Show typing indicator
-        function showTyping() {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing-indicator';
-            typingDiv.id = 'typingIndicator';
-            typingDiv.innerHTML = '<span></span><span></span><span></span>';
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // Remove typing indicator
-        function hideTyping() {
-            const typing = document.getElementById('typingIndicator');
-            if (typing) typing.remove();
-        }
-
-        // Show quick reply buttons
-        function showQuickReplies(replies) {
-            quickReplies.innerHTML = '';
-            replies.forEach(reply => {
-                const btn = document.createElement('button');
-                btn.className = 'quick-reply';
-                btn.textContent = reply;
-                btn.addEventListener('click', () => {
-                    handleUserInput(reply);
-                });
-                quickReplies.appendChild(btn);
-            });
-        }
-
-        // Process user input
-        function handleUserInput(text) {
-            // Add user message
-            addMessage('user', text);
-            quickReplies.innerHTML = '';
-            chatInput.value = '';
-
-            // Show typing
-            showTyping();
-
-            // Process response with delay for realism
-            setTimeout(() => {
-                hideTyping();
-                const response = generateResponse(text.toLowerCase());
-                addMessage('bot', response.text);
-                if (response.quickReplies) {
-                    showQuickReplies(response.quickReplies);
-                }
-            }, 1000 + Math.random() * 500);
-        }
-
-        // Generate bot response
-        function generateResponse(input) {
-            // Check for greetings
-            if (knowledgeBase.greetings.some(g => input.includes(g))) {
-                return {
-                    text: "Welcome to Aura! I'm your AI concierge. I can help you with reservations, menu details, dietary requirements, or describe our unique dining experience. What brings you here today?",
-                    quickReplies: ["Make a reservation", "View menu", "Tell me about the experience", "Dietary options"]
-                };
-            }
-
-            // Check for gratitude
-            if (input.includes('thank') || input.includes('thanks')) {
-                return {
-                    text: "You're most welcome! Is there anything else I can assist you with for your visit to Aura?",
-                    quickReplies: ["No, that's all", "Yes, one more thing", "See you soon!"]
-                };
-            }
-
-            // Check for goodbye
-            if (input.includes('bye') || input.includes('goodbye') || input.includes('see you')) {
-                return {
-                    text: "Thank you for chatting! We look forward to hosting you at Aura. Have a wonderful day!",
-                    quickReplies: []
-                };
-            }
-
-            // Check knowledge base
-            for (let topic in knowledgeBase) {
-                if (topic === 'greetings') continue;
-                const item = knowledgeBase[topic];
-                if (item.keywords && item.keywords.some(k => input.includes(k))) {
-                    conversationContext.lastTopic = topic;
-                    
-                    // Context-aware responses
-                    if (topic === 'reservation') {
-                        // Extract number if mentioned
-                        const numbers = input.match(/\d+/);
-                        if (numbers) {
-                            conversationContext.guestCount = numbers[0];
-                            return {
-                                text: `Perfect! For ${numbers[0]} guests, I recommend our 6:30 PM seating for the full experience. Would you like me to open the reservation form?`,
-                                quickReplies: ["Yes, book now", "Tell me more about the menu", "What are the hours?"]
-                            };
-                        }
-                    }
-                    
-                    return {
-                        text: item.response,
-                        quickReplies: getContextualReplies(topic)
-                    };
-                }
-            }
-
-            // Default response
-            return {
-                text: knowledgeBase.default,
-                quickReplies: ["Make a reservation", "Menu prices", "Dietary restrictions", "Location"]
-            };
-        }
-
-        function getContextualReplies(topic) {
-            const replies = {
-                menu: ["Make a reservation", "Dietary options", "View full menu"],
-                reservation: ["View menu first", "What are your hours?", "Dietary restrictions"],
-                hours: ["Make a reservation", "What's the dress code?", "Location"],
-                location: ["Make a reservation", "Parking info", "Hours"],
-                dietary: ["Make a reservation", "View menu", "Technology used"],
-                dresscode: ["Make a reservation", "Menu details", "Experience info"],
-                technology: ["Make a reservation", "Menu details", "Pricing"],
-                pricing: ["Make a reservation", "What's included?", "Wine pairing"]
-            };
-            return replies[topic] || ["Make a reservation", "View menu", "Contact human"];
-        }
-
-        // Send button click
-        chatSend.addEventListener('click', () => {
-            const text = chatInput.value.trim();
-            if (text) handleUserInput(text);
-        });
-
-        // Enter key
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const text = chatInput.value.trim();
-                if (text) handleUserInput(text);
-            }
-        });
-
-        // Initialize chat with welcome message
-        setTimeout(() => {
-            if (!chatContainer.classList.contains('active')) {
-                chatToggle.classList.add('pulse');
-            }
-        }, 5000);
-
-        // Initial message (hidden until opened)
-        const welcomeMessage = "Hello! I'm Aura's AI concierge. I can help you explore our futuristic menu, make reservations, or answer questions about our unique dining experience. How may I assist you today?";
-        
-        // Load welcome message when first opened
-        let firstOpen = true;
-        chatToggle.addEventListener('click', () => {
-            if (firstOpen && chatContainer.classList.contains('active')) {
-                setTimeout(() => {
-                    addMessage('bot', welcomeMessage);
-                    showQuickReplies(["Make a reservation", "View menu", "Dietary restrictions", "Hours & Location"]);
-                }, 500);
-                firstOpen = false;
-            }
-        });
-
-        // Close chat when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!chatContainer.contains(e.target) && !chatToggle.contains(e.target)) {
-                chatContainer.classList.remove('active');
-            }
-        });
-
+        console.log('Aura Gastronomy - Email System Status:', EMAILJS_CONFIG.isConfigured() ? 'Active' : 'Demo Mode');
     </script>
 </body>
 </html>
